@@ -8,7 +8,7 @@ def main():
     ap.add_argument("--out", required=True); ap.add_argument("--size", type=int, default=128); ap.add_argument("--arch", default="resnet18")
     a = ap.parse_args()
     m = resnet_classifier(a.arch) if a.task == "cls" else UNet(3, 16)
-    m.load_state_dict(torch.load(a.ckpt, map_location="cpu")); m.eval()
+    m.load_state_dict(torch.load(a.ckpt, map_location="cpu", weights_only=True)); m.eval()
     torch.onnx.export(m, torch.randn(1, 3, a.size, a.size), a.out, input_names=["image"], output_names=["logits"],
                       dynamic_axes={"image": {0: "batch"}, "logits": {0: "batch"}}, opset_version=17)
     print("exported", a.out)

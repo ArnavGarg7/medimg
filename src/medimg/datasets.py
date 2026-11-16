@@ -14,18 +14,20 @@ class MedDataset(Dataset):
 
     def __getitem__(self, i):
         r = self.df.iloc[i]
-        img = Image.open(os.path.join(self.root, r.image_path)).convert("RGB" if self.rgb else "L").resize((self.size, self.size), Image.BILINEAR)
+        img = Image.open(os.path.join(self.root, r.image_path)).convert("RGB" if self.rgb else "L")
+        orig_w = img.size[0]
+        img = img.resize((self.size, self.size), Image.BILINEAR)
         msk = Image.open(os.path.join(self.root, r.mask_path)).convert("L").resize((self.size, self.size), Image.NEAREST)
         x = np.asarray(img, np.float32) / 255.0
         x = x.transpose(2, 0, 1) if self.rgb else x[None]
         m = (np.asarray(msk, np.float32) > 127)[None].astype(np.float32)
-        boxes = np.array(json.loads(r.boxes_json) or [], np.float32).reshape(-1, 4) * (self.size / max(1, Image.open(os.path.join(self.root, r.image_path)).size[0]))
+        boxes = np.array(json.loads(r.boxes_json) or [], np.float32).reshape(-1, 4) * (self.size / max(1, orig_w))
         if self.augment:   # train-only augmentation: flips (applied identically to image, mask, boxes)
             if self.rng.random() < 0.5:
                 x, m = x[..., ::-1].copy(), m[..., ::-1].copy()
                 if len(boxes): boxes[:, [0, 2]] = self.size - boxes[:, [2, 0]]
             if self.rng.random() < 0.5:
-                x, m = x[:, ::-1].copy(), m[:, ::-1].copy()
+                x, m = x[:, ::-1, :].copy(), m[:, ::-1, :].copy()
                 if len(boxes): boxes[:, [1, 3]] = self.size - boxes[:, [3, 1]]
         return dict(x=torch.from_numpy(x), mask=torch.from_numpy(m), label=torch.tensor(float(r.label)),
                     boxes=torch.from_numpy(boxes), image_id=r.image_id)

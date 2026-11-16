@@ -41,7 +41,7 @@ def main():
         yv, pv = predict(model, val, dev); au = auroc(yv, pv)
         hist.append(dict(epoch=ep + 1, train_loss=tl / len(tr), val_auroc=au)); print(hist[-1])
         if au > best: best = au; torch.save(model.state_dict(), f"{a.out}/best.pt")
-    model.load_state_dict(torch.load(f"{a.out}/best.pt")); yv, pv = predict(model, val, dev)
+    model.load_state_dict(torch.load(f"{a.out}/best.pt", map_location=dev, weights_only=True)); yv, pv = predict(model, val, dev)
     thr = threshold_at_sensitivity(yv, pv, 0.95)               # operating point chosen on VAL only
     yt, pt = predict(model, tel, dev); se, sp = sens_spec(yt, pt >= thr)
     x1 = te[0]["x"][None].to(dev)

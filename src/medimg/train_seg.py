@@ -26,12 +26,13 @@ def main():
     trl, val, tel = L("train", augment=True), L("val"), L("test")
     model = UNet(3, a.base).to(dev); opt = torch.optim.AdamW(model.parameters(), lr=a.lr); best, hist = -1, []
     for ep in range(a.epochs):
-        model.train()
+        model.train(); tl = 0
         for b in trl:
-            opt.zero_grad(); dice_bce_loss(model(b["x"].to(dev)), b["mask"].to(dev)).backward(); opt.step()
-        vd, vi = evaluate(model, val, dev); hist.append(dict(epoch=ep + 1, val_dice=vd, val_iou=vi)); print(hist[-1])
+            opt.zero_grad(); l = dice_bce_loss(model(b["x"].to(dev)), b["mask"].to(dev))
+            l.backward(); opt.step(); tl += l.item() * len(b["mask"])
+        vd, vi = evaluate(model, val, dev); hist.append(dict(epoch=ep + 1, train_loss=tl / len(trl.dataset), val_dice=vd, val_iou=vi)); print(hist[-1])
         if vd > best: best = vd; torch.save(model.state_dict(), f"{a.out}/best.pt")
-    model.load_state_dict(torch.load(f"{a.out}/best.pt")); td, ti = evaluate(model, tel, dev)
+    model.load_state_dict(torch.load(f"{a.out}/best.pt", map_location=dev, weights_only=True)); td, ti = evaluate(model, tel, dev)
     x1 = next(iter(tel))["x"][:1].to(dev)
     rep = dict(test_dice=td, test_iou=ti, latency_ms_median_p95=time_fn(lambda: model(x1)), history=hist, meta=run_meta(a))
     save_json(rep, f"{a.out}/report.json"); print(dict(test_dice=td, test_iou=ti))
