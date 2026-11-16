@@ -30,6 +30,7 @@ def mask_to_boxes(mask_np):
 
 def locate_metadata_file(raw_dir):
     candidates = [
+        os.path.join(raw_dir, "HAM10000_metadata_active.csv"),
         os.path.join(raw_dir, "HAM10000_metadata.csv"),
         os.path.join(raw_dir, "metadata.csv"),
         os.path.join(raw_dir, "HAM10000_metadata"),

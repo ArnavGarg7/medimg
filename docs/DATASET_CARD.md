@@ -35,22 +35,26 @@ To execute Tasks B, C, and D on the real dataset, please download the following 
 
 ---
 
-## 4. Label Definitions & Clinical Rationale
+## 4. Label Definitions & Clinical Rationale (Empirical Statistics from HAM10000_metadata.csv)
+- **Total Images ($N$)**: **10,015**
+- **Unique Lesions ($N_{\text{lesions}}$)**: **7,470**
+- **Multi-image Lesions**: **1,956** (with up to 6 distinct images per lesion; proves necessity of lesion-level grouped splitting)
 - **Binary Triage Label**:
-  - `label = 1`: **Melanoma (`mel`)** — Invasive melanoma and melanoma in situ. This is the deadliest skin malignancy; early clinical triage and prioritization directly lowers mortality and biopsy delay.
-  - `label = 0`: **Non-Melanoma (`other`)** — All other diagnostic categories.
+  - `label = 1`: **Melanoma (`mel`)** — **1,113 images (11.11%)**. Invasive melanoma and melanoma in situ. Early clinical triage and prioritization directly reduces mortality and biopsy delay.
+  - `label = 0`: **Non-Melanoma (`other`)** — **8,902 images (88.89%)**.
 - **7-Class Granular Categories (preserved in `dx_7class`)**:
-  - `nv`: Melanocytic nevi (benign moles)
-  - `bkl`: Benign keratosis-like lesions (solar lentigines, seborrheic keratoses, lichen-planus like keratoses)
-  - `bcc`: Basal cell carcinoma (common non-melanoma skin cancer)
-  - `akiec`: Actinic keratoses and intraepithelial carcinoma (pre-cancerous)
-  - `vasc`: Vascular lesions (angiomas, pyogenic granulomas, hemorrhage)
-  - `df`: Dermatofibroma (benign fibrous histiocytoma)
+  - `nv` (Melanocytic nevi): **6,705 (66.95%)**
+  - `mel` (Melanoma): **1,113 (11.11%)**
+  - `bkl` (Benign keratosis-like lesions): **1,099 (10.97%)**
+  - `bcc` (Basal cell carcinoma): **514 (5.13%)**
+  - `akiec` (Actinic keratoses / Bowen's disease): **327 (3.27%)**
+  - `vasc` (Vascular lesions): **142 (1.42%)**
+  - `df` (Dermatofibroma): **115 (1.15%)**
 - **Ground Truth Validation Method (`dx_type`)**:
-  - Histopathology (`histo`): Definitive biopsy/excision confirmation (applied to >50% of lesions, and all suspicious/malignant lesions).
-  - Confocal microscopy (`confocal`).
-  - Expert dermatoscopic consensus (`consensus`).
-  - Follow-up monitoring showing no morphological change over 1-2 years (`follow_up`).
+  - `histo` (Histopathology confirmation): **5,340 (53.32%)**
+  - `follow_up` (No change across follow-up): **3,704 (36.98%)**
+  - `consensus` (Dermatoscopic expert consensus): **902 (9.01%)**
+  - `confocal` (In-vivo confocal microscopy): **69 (0.69%)**
 
 ---
 

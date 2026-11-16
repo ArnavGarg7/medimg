@@ -51,13 +51,13 @@ def box_iou(a, b):
     inter = ix * iy; ua = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
     return inter / ua if ua > 0 else 0.0
 
-def ap50(preds, gts):
-    """preds: list per image of (boxes, scores); gts: list per image of boxes. All-point interpolated AP at IoU 0.5."""
+def ap_iou(preds, gts, iou_thresh=0.5):
+    """Compute AP for given IoU threshold."""
     recs = [(s, i, b) for i, (bx, sc) in enumerate(preds) for b, s in zip(bx, sc)]; recs.sort(key=lambda t: -t[0])
     used = [np.zeros(len(g), bool) for g in gts]; npos = sum(len(g) for g in gts); tp = []
     for s, i, b in recs:
         ious = [box_iou(b, g) for g in gts[i]]; k = int(np.argmax(ious)) if ious else -1
-        ok = k >= 0 and ious[k] >= 0.5 and not used[i][k]
+        ok = k >= 0 and ious[k] >= iou_thresh and not used[i][k]
         if ok: used[i][k] = True
         tp.append(ok)
     tp = np.array(tp, float); ctp = np.cumsum(tp); cfp = np.cumsum(1 - tp)
@@ -66,6 +66,15 @@ def ap50(preds, gts):
     for i in range(len(mpre) - 2, -1, -1): mpre[i] = max(mpre[i], mpre[i + 1])
     idx = np.where(mrec[1:] != mrec[:-1])[0]
     return float(((mrec[idx + 1] - mrec[idx]) * mpre[idx + 1]).sum())
+
+def ap50(preds, gts):
+    """All-point interpolated AP at IoU 0.5."""
+    return ap_iou(preds, gts, 0.5)
+
+def ap_50_95(preds, gts):
+    """Mean AP across IoU thresholds 0.50 to 0.95 (step 0.05)."""
+    thresholds = np.arange(0.50, 1.00, 0.05)
+    return float(np.mean([ap_iou(preds, gts, t) for t in thresholds]))
 
 def time_fn(fn, warmup=3, runs=20):
     """Latency in ms: returns (median, p95)."""
