@@ -1,0 +1,10 @@
+numpy>=1.26
+Pillow>=10
+pandas>=2.0
+matplotlib>=3.8
+pytest>=8
+scikit-learn>=1.3     # test-only cross-check of AUROC
+torch>=2.2            # phases 7-9 (not needed for `make baseline`)
+torchvision>=0.17
+onnx>=1.15            # optional export
+onnxruntime>=1.17

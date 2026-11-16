@@ -1,0 +1,7 @@
+build/
+out/
+data/
+runs/
+__pycache__/
+*.pt
+*.onnx
