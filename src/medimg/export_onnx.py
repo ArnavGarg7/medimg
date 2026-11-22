@@ -10,7 +10,7 @@ def main():
     m = resnet_classifier(a.arch) if a.task == "cls" else UNet(3, 16)
     m.load_state_dict(torch.load(a.ckpt, map_location="cpu", weights_only=True)); m.eval()
     torch.onnx.export(m, torch.randn(1, 3, a.size, a.size), a.out, input_names=["image"], output_names=["logits"],
-                      dynamic_axes={"image": {0: "batch"}, "logits": {0: "batch"}}, opset_version=17)
+                      dynamic_axes={"image": {0: "batch"}, "logits": {0: "batch"}}, opset_version=17, dynamo=False)
     print("exported", a.out)
 
 if __name__ == "__main__":

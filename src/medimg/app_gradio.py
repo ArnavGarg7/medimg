@@ -64,7 +64,7 @@ def predict_fn(image, threshold):
 def build_app():
     # Find example images
     examples = []
-    for d in ["data/isic_seg_det/images", "data/ham10000_raw"]:
+    for d in ["data/synth/images", "data/isic_seg_det/images", "data/ham10000_raw"]:
         if os.path.exists(d):
             imgs = [os.path.join(d, f) for f in os.listdir(d) if f.endswith((".png", ".jpg", ".jpeg"))][:4]
             for p in imgs:

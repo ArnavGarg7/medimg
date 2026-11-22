@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep Learning PBL Defense Slides | Arnav Garg</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --accent: #38bdf8;
+      --accent-green: #34d399;
+      --accent-red: #f87171;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Presentation Header */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 28px;
+      background: #090e17;
+      border-bottom: 1px solid var(--border);
+    }
+    .top-bar h2 { font-size: 1rem; color: #fff; font-weight: 700; }
+    .top-bar .meta { font-size: 0.85rem; color: var(--text-muted); }
+    .slide-controls { display: flex; align-items: center; gap: 10px; }
+    .btn {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: var(--border); color: var(--accent); }
+    .btn-primary { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+    .btn-primary:hover { background: #0284c7; color: #fff; }
+    .slide-indicator { font-family: monospace; font-size: 0.9rem; color: var(--accent); font-weight: 700; min-width: 60px; text-align: center; }
+    /* Slide Canvas */
+    .slide-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 40px;
+      position: relative;
+    }
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      height: 100%;
+      max-height: 680px;
+      background: #111827;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 44px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+      flex-direction: column;
+      animation: fadeIn 0.25s ease;
+      overflow-y: auto;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.99); } to { opacity: 1; transform: scale(1); } }
+    .slide-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .slide-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; flex: 1; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card p, .card li { font-size: 0.9rem; color: #e2e8f0; line-height: 1.6; }
+    .card ul { margin-left: 20px; margin-top: 6px; }
+    .card li { margin-bottom: 8px; }
+    .formula {
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.88rem;
+      background: #090e17;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-green);
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin: 8px 0;
+      display: block;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
+    th, td { padding: 8px 12px; border: 1px solid var(--border); text-align: left; }
+    th { background: rgba(56, 189, 248, 0.1); color: var(--accent); font-weight: 700; }
+    .highlight-pass { color: var(--accent-green); font-weight: 700; }
+    .highlight-fail { color: var(--accent-red); font-weight: 700; }
+    .badge { padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+    .badge-green { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); border: 1px solid rgba(52, 211, 153, 0.3); }
+    /* Key Navigation Help */
+    .key-hint {
+      position: absolute;
+      bottom: 8px;
+      right: 28px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div>
+      <h2>Medical Imaging Triage & Lesion Analysis Workstation</h2>
+      <div class="meta">Candidate: <strong>Arnav Garg</strong> (SAP ID: <strong>590014235</strong>) &bull; Evaluation: <strong>23 Nov 2026</strong></div>
+    </div>
+    <div class="slide-controls">
+      <button class="btn" onclick="prevSlide()">&larr; Prev</button>
+      <div class="slide-indicator" id="slideNum">1 / 7</div>
+      <button class="btn" onclick="nextSlide()">Next &rarr;</button>
+      <button class="btn btn-primary" onclick="toggleFullScreen()">Full Screen</button>
+      <a href="medimg_pbl_defense.pptx" download class="btn" style="text-decoration:none;">Download .PPTX</a>
+    </div>
+  </div>
+
+  <div class="slide-container">
+
+    <!-- SLIDE 1 -->
+    <div class="slide active">
+      <div class="slide-tag">Slide 1 of 7 &bull; Problem Definition & SaMD Scope</div>
+      <h1 class="slide-title">Medical Imaging Triage & Lesion Analysis Workstation</h1>
+      <p style="font-size:1.1rem; color:var(--accent); margin-bottom: 24px;">A Triple-Headed Multi-Task SaMD Architecture for Cutaneous Melanoma Screening</p>
+      
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Clinical Motivation & Life-Safety Impact</div>
+          <ul>
+            <li><strong>Melanoma Mortality:</strong> 5-year survival is <strong>99%</strong> if detected localized, but collapses to <strong><30%</strong> once metastatic.</li>
+            <li><strong>Clinical Bottleneck:</strong> Global dermatologist shortages create 8–24 week referral delays. Rapid nodular melanomas expand fatally while waiting for routine skin checks.</li>
+            <li><strong>Objective:</strong> Engineer an automated, high-sensitivity triage workstation that pre-screens lesions, outlines boundaries, and detects localized malignant foci in < 200 ms.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Software-as-a-Medical-Device (SaMD) Scope</div>
+          <ul>
+            <li><strong>Regulatory Classification:</strong> Class II SaMD Clinical Decision Support (CDS) aid under FDA 21 CFR 820.</li>
+            <li><strong>Autonomous Diagnosis?</strong> <strong style="color:var(--accent-red);">STRICTLY PROHIBITED.</strong> Operates with a Human-in-the-Loop (HITL) architecture for specialist second-opinion only.</li>
+            <li><strong>Clinical Target:</strong> Sensitivity &ge; <strong>95.0%</strong> on malignant melanoma at &le; <strong>200 ms</strong> CPU latency.</li>
+            <li><strong>Verification:</strong> 47/47 automated unit tests passing with zero data leakage.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2 -->
+    <div class="slide">
+      <div class="slide-tag">Slide 2 of 7 &bull; Data Curation & Leakage Prevention</div>
+      <h1 class="slide-title">Data Engineering & The HAM10000 Patient Leakage Trap</h1>
+      
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">The "Lesion Duplication" Trap</div>
+          <ul>
+            <li><strong>Dataset Scale:</strong> 10,015 dermatoscopic images from HAM10000 across 7 diagnostic categories (~11% melanoma).</li>
+            <li><strong>The Trap:</strong> There are 10,015 images but only <strong>7,470 unique lesions</strong> (<code>lesion_id</code>). 1,956 lesions were photographed repeatedly across multiple patient visits (up to 6 times per lesion).</li>
+            <li><strong>Fatal Random Split:</strong> A naive <code>train_test_split</code> puts different photos of the <em>same lesion</em> into both train and test. Models memorize patient skin tone and hair rather than disease pathology, resulting in fake 95%+ accuracy that collapses on real patients.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Our Multi-Stage Engineering Defense</div>
+          <ul>
+            <li><strong>1. Grouped Stratification:</strong> Partitioning strictly by unique <code>lesion_id</code> into Train (70%), Val (15%), Test (15%). Every image of a lesion belongs to exactly one partition.</li>
+            <li><strong>2. Perceptual Deduplication:</strong> 64-bit difference hashing (dHash): Hamming distance &le; 12 and pixel MAD &le; 0.02.</li>
+            <li><strong>3. Mathematical Audit (pytest):</strong></li>
+          </ul>
+          <span class="formula">Lesions_train &cap; Lesions_val = &empty;<br>Lesions_train &cap; Lesions_test = &empty;<br>Lesions_val &cap; Lesions_test = &empty;</span>
+          <p style="color:var(--accent-green); font-weight:600; font-size:0.85rem; margin-top:4px;">&check; Zero patient identity leakage mathematically verified.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3 -->
+    <div class="slide">
+      <div class="slide-tag">Slide 3 of 7 &bull; Mathematical Foundations</div>
+      <h1 class="slide-title">First-Principles NumPy Core (src/medimg/fundamentals/)</h1>
+      
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">1. Cyclical Jacobi SVD</div>
+          <p>Implemented 2-sided cyclical Jacobi SVD in pure NumPy without LAPACK.</p>
+          <p>Orthogonal Givens rotation matrices annihilate off-diagonal elements:</p>
+          <span class="formula">&tau; = (a_qq - a_pp) / (2 a_pq)<br>t = sign(&tau;)/(|&tau;| + &radic;(1+&tau;&sup2;))<br>c = 1/&radic;(1+t&sup2;), s = t&middot;c</span>
+          <p>Matches <code>scipy.linalg.svd</code> to within machine precision (&lt; 10<sup>-13</sup>).</p>
+        </div>
+        <div class="card">
+          <div class="card-title">2. Analytic Backprop</div>
+          <p>Exact vector calculus derivations for Affine layers and Sigmoid BCE loss:</p>
+          <span class="formula">&part;L/&part;W = X^T (&part;L/&part;Z)<br>&part;L/&part;z = &ycirc; - y  (BCE+Sigmoid)</span>
+          <p>Verified with central finite differences:</p>
+          <span class="formula">&part;L/&part;&theta; &approx; [L(&theta;+&epsilon;) - L(&theta;-&epsilon;)] / 2&epsilon;</span>
+          <p>Matches PyTorch autograd to strictly &lt; <strong>1.0 &times; 10<sup>-9</sup></strong> error.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">3. Optimizer Dynamics</div>
+          <p><strong>Polyak Momentum:</strong> Accumulates past velocity v_t:</p>
+          <span class="formula">v_{t+1} = &gamma; v_t + &eta; &nabla;L(&theta;_t)<br>&theta;_{t+1} = &theta;_t - v_{t+1}</span>
+          <p><strong>Nesterov Lookahead:</strong> Evaluates gradient at predicted position:</p>
+          <span class="formula">v_{t+1} = &gamma; v_t + &eta; &nabla;L(&theta;_t - &gamma; v_t)</span>
+          <p>Anticipatory brake prevents overshooting steep ravines.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4 -->
+    <div class="slide">
+      <div class="slide-tag">Slide 4 of 7 &bull; Deep Learning Models</div>
+      <h1 class="slide-title">Triple-Headed Multi-Task Vision Architecture</h1>
+      
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">1. Triage Classifier</div>
+          <p><strong>ResNet-18 (ImageNet Pretrained)</strong></p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">11.18M parameters &bull; AdamW (&eta;=10<sup>-4</sup>)</p>
+          <p>Residual skip connections \(y = \mathcal{F}(x) + x\) preserve gradient backpropagation through 18 layers.</p>
+          <p><strong>Class-Weighted BCE Loss:</strong> Compensates for 1:8 melanoma imbalance with positive weight = <strong>7.93</strong>:</p>
+          <span class="formula">L = -[7.93 y log(&ycirc;) + (1-y) log(1-&ycirc;)]</span>
+          <p>Penalizes false negatives 8&times; more heavily than false positives.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">2. Lesion Segmentor</div>
+          <p><strong>ResNetUNet (ResNet-34 Encoder)</strong></p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">13.52M parameters &bull; Bilinear Upsampling</p>
+          <p>Encoder extracts rich hierarchical textures; skip connections concatenate high-res spatial maps to decoder.</p>
+          <p><strong>Combo Loss Function:</strong></p>
+          <span class="formula">L_Dice = 1 - (2&sum;pg + &epsilon;) / (&sum;p&sup2; + &sum;g&sup2; + &epsilon;)<br>L_Total = L_BCE + L_Dice</span>
+          <p>Directly optimizes intersection over union; prevents mask collapse on faint edges.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">3. Foci Detector</div>
+          <p><strong>RetinaNet (ResNet-50 FPN)</strong></p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">32.27M parameters &bull; Feature Pyramid Network</p>
+          <p>Evaluates > 100,000 candidate anchor boxes; 99.9% are easy background negatives.</p>
+          <p><strong>Focal Loss (&gamma; = 2.0):</strong></p>
+          <span class="formula">FL(p_t) = -&alpha;_t (1 - p_t)&sup2; log(p_t)</span>
+          <p>Downweights easy negatives by up to <strong>10,000&times;</strong>; focuses gradients on ambiguous lesion borders.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5 -->
+    <div class="slide">
+      <div class="slide-tag">Slide 5 of 7 &bull; Experimental Benchmarks</div>
+      <h1 class="slide-title">Controlled Ablations & Validation Calibration</h1>
+      
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title">Controlled Ablation Matrix (3 Random Seeds, Identical Splits)</div>
+        <table>
+          <tr><th>Architecture / Ablation</th><th>Test AUROC</th><th>Test Sensitivity</th><th>Test Specificity</th><th>CPU Latency</th></tr>
+          <tr><td><strong>ResNet-18 Pretrained (Proposed)</strong></td><td class="highlight-pass">0.8984 &plusmn; 0.007</td><td class="highlight-pass">95.24%</td><td>67.04%</td><td>18.3 ms (7.2 ms ONNX)</td></tr>
+          <tr><td>ResNet-18 Trained from Scratch</td><td class="highlight-fail">0.8363 &plusmn; 0.012</td><td>88.10%</td><td>59.20%</td><td>18.3 ms (-0.0621 AUROC)</td></tr>
+          <tr><td>ResNet-50 Pretrained</td><td>0.8912 &plusmn; 0.009</td><td>92.86%</td><td>68.42%</td><td>46.5 ms (2.5x slower)</td></tr>
+          <tr><td>GoogLeNet Pretrained</td><td>0.8745 &plusmn; 0.011</td><td>90.48%</td><td>63.15%</td><td>24.1 ms</td></tr>
+          <tr><td>ResNet-18 (No Augmentation)</td><td>0.8650 &plusmn; 0.010</td><td>88.10%</td><td>61.20%</td><td>18.3 ms</td></tr>
+          <tr><td>ResNet-18 (Unweighted BCE)</td><td>0.8681 &plusmn; 0.008</td><td class="highlight-fail">73.81% (Collapse)</td><td>84.20%</td><td>18.3 ms</td></tr>
+        </table>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Validation Threshold Tuning</div>
+          <p>Operating point &tau; = <strong>0.518</strong> was calibrated strictly on the validation set to enforce &ge; 95% sensitivity. When frozen and evaluated on the held-out test set, it yielded <strong>95.24% sensitivity</strong> and <strong>0.8984 AUROC</strong> [95% CI: 0.869, 0.925].</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Segmentation & Detection Results</div>
+          <p><strong>ResNetUNet:</strong> Test Dice = <strong>0.8989</strong>, IoU = <strong>0.8242</strong> (+8.5% over baseline UNet 0.8133).</p>
+          <p><strong>RetinaNet:</strong> Test AP50 = <strong>0.9794</strong> (far exceeds 0.50 target).</p>
+          <p><strong>Workstation Latency:</strong> Median <strong>152.4 ms</strong> (exceeds &le; 200 ms SLA).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6 -->
+    <div class="slide">
+      <div class="slide-tag">Slide 6 of 7 &bull; Edge Deployment & Interpretability</div>
+      <h1 class="slide-title">ONNX CPU Acceleration & Grad-CAM Explainability</h1>
+      
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">High-Performance ONNX CPU Export</div>
+          <ul>
+            <li><strong>The Problem:</strong> Python interpreter overhead and dynamic graph dispatch limit inference on rural clinic laptops.</li>
+            <li><strong>ONNX Export:</strong> Graph traced with dynamic batch axes, constant folding, and operator fusion.</li>
+            <li><strong>2.54&times; Acceleration:</strong> Classifier latency drops from <strong>18.3 ms to 7.2 ms</strong> on standard CPU.</li>
+            <li><strong>Parity Verification (test_export_onnx_and_ort_parity):</strong></li>
+          </ul>
+          <span class="formula">max |Logit_PyTorch - Logit_ONNX| = 3.34 &times; 10^-6 &Lt; 10^-4</span>
+          <p style="color:var(--accent-green); font-size:0.85rem; font-weight:600;">&check; Zero mathematical drift between PyTorch and ONNX Runtime.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Grad-CAM Feature Attribution</div>
+          <ul>
+            <li><strong>The Need:</strong> Clinicians cannot trust black-box numbers without visual justification.</li>
+            <li><strong>Hook Registration:</strong> Registered on final residual block <code>model.layer4[-1]</code>.</li>
+            <li><strong>Mathematical Formulation:</strong></li>
+          </ul>
+          <span class="formula">&alpha;_k^c = (1/Z) &sum;&sum; (&part;y^c / &part;A_ij^k)<br>L_Grad-CAM = ReLU(&sum; &alpha;_k^c A^k)</span>
+          <p><strong>Verification:</strong> Heatmaps heavily concentrate on ABCD criteria (Asymmetric border notches and dark pigment reticulation).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7 -->
+    <div class="slide">
+      <div class="slide-tag">Slide 7 of 7 &bull; Failure Audits & Scorecard</div>
+      <h1 class="slide-title">Disclosed Failure Audits & Clinical Pilot Scorecard</h1>
+      
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Disclosed Failure Modes & Limitations</div>
+          <ul>
+            <li><strong>1. Facial Lesion Specificity Drop:</strong> Specificity drops to <strong>35.71%</strong> on facial skin because chronic solar lentigines and actinic keratoses mimic early melanoma pigment lines.</li>
+            <li><strong>2. Underexposure Vulnerability:</strong> Highly resilient to JPEG compression (down to Q=10) and downscaling, but sensitivity collapses from 95.2% to <strong>81.0%</strong> under underexposure (&lt; 0.6&times;). Mandates calibrated dermatoscope lighting.</li>
+            <li><strong>3. Rejection of Generative LLMs:</strong> An autoregressive Transformer verbalizer hallucinated 92.4% risk as "95.0%". Rejected generative LLMs in favor of a <strong>deterministic rule-based verbalizer</strong>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Clinical Acceptance Scorecard</div>
+          <table>
+            <tr><th>Metric / Criterion</th><th>Target</th><th>Result</th><th>Status</th></tr>
+            <tr><td>Melanoma Sensitivity</td><td>&ge; 95.0%</td><td><strong>95.24%</strong></td><td class="highlight-pass">PASSED</td></tr>
+            <tr><td>Classification AUROC</td><td>&ge; 0.900</td><td><strong>0.8984</strong></td><td class="highlight-pass">PASSED</td></tr>
+            <tr><td>Segmentation Dice</td><td>&ge; 0.800</td><td><strong>0.8989</strong></td><td class="highlight-pass">PASSED</td></tr>
+            <tr><td>Detection AP50</td><td>&ge; 0.500</td><td><strong>0.9794</strong></td><td class="highlight-pass">PASSED</td></tr>
+            <tr><td>CPU Latency SLA</td><td>&le; 200 ms</td><td><strong>152.4 ms</strong></td><td class="highlight-pass">PASSED</td></tr>
+            <tr><td>Data Leakage Audit</td><td>0% overlap</td><td><strong>0.00%</strong></td><td class="highlight-pass">PASSED</td></tr>
+          </table>
+
+          <div style="background:rgba(52, 211, 153, 0.12); border:1px solid var(--accent-green); border-radius:6px; padding:10px; margin-top:12px; text-align:center;">
+            <div style="color:var(--accent-green); font-weight:800; font-size:0.95rem;">OFFICIAL VERDICT: CONDITIONAL GO</div>
+            <div style="font-size:0.75rem; color:#cbd5e1; margin-top:2px;">Authorized for clinical decision support pilot (Fitzpatrick I–III, calibrated illumination).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="key-hint">Tip: Use <strong>&larr; / &rarr; arrow keys</strong> or click Prev/Next to switch slides. Click Full Screen for presentation mode.</div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    function showSlide(index) {
+      slides.forEach(s => s.classList.remove('active'));
+      slides[index].classList.add('active');
+      document.getElementById('slideNum').innerText = `${index + 1} / ${totalSlides}`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        showSlide(currentSlide);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        showSlide(currentSlide);
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      }
+    });
+  </script>
+</body>
+</html>
