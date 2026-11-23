@@ -18,48 +18,51 @@ def get_models():
 
 def predict_fn(image, threshold):
     if image is None:
-        return None, None, None, "Please upload an image.", ""
+        return None, "<div style='color:#f59e0b; padding:10px;'>Please upload or select an image.</div>", "Please upload an image.", ""
     
-    # Save uploaded PIL image to temporary path
-    tmp_path = "tmp_gradio_input.png"
-    image.save(tmp_path)
-    
-    models = get_models()
-    result, overlay_img = run_inference(tmp_path, out_dir=None, models=models, threshold=threshold)
-    
-    # Binary segmentation mask
-    mask_arr = ((overlay_img != image).any(axis=-1) if hasattr(overlay_img, "size") and overlay_img.size == image.size else None)
-    
-    # Format triage badge HTML
-    is_high = result["priority"] == "HIGH PRIORITY"
-    bg_color = "#ffebee" if is_high else "#e8f5e9"
-    border_color = "#d32f2f" if is_high else "#388e3c"
-    text_color = "#c62828" if is_high else "#2e7d32"
-    badge_label = "HIGH PRIORITY (Fast-Track Urgent Dermatologist Review)" if is_high else "LOW PRIORITY (Routine Clinical Follow-Up)"
+    try:
+        # Save uploaded PIL image to temporary path
+        tmp_path = "tmp_gradio_input.png"
+        image.save(tmp_path)
+        
+        models = get_models()
+        result, overlay_img = run_inference(tmp_path, out_dir=None, models=models, threshold=threshold)
+        
+        # Format triage badge HTML
+        is_high = result["priority"] == "HIGH PRIORITY"
+        bg_color = "#ffebee" if is_high else "#e8f5e9"
+        border_color = "#d32f2f" if is_high else "#388e3c"
+        text_color = "#c62828" if is_high else "#2e7d32"
+        badge_label = "HIGH PRIORITY (Fast-Track Urgent Dermatologist Review)" if is_high else "LOW PRIORITY (Routine Clinical Follow-Up)"
 
-    badge_html = f"""
-    <div style="background-color: {bg_color}; border: 2px solid {border_color};
-                border-radius: 8px; padding: 16px; margin-bottom: 12px; font-family: sans-serif;">
-        <h2 style="color: {text_color}; margin: 0 0 8px 0; font-size: 22px;">
-            {badge_label}
-        </h2>
-        <div style="font-size: 18px; margin: 6px 0;">
-            <b>Melanoma Risk Probability:</b> <span style="font-size: 22px; font-weight: bold; color: {text_color};">{result['risk_score']*100:.2f}%</span>
+        badge_html = f"""
+        <div style="background-color: {bg_color}; border: 2px solid {border_color};
+                    border-radius: 8px; padding: 16px; margin-bottom: 12px; font-family: sans-serif;">
+            <h2 style="color: {text_color}; margin: 0 0 8px 0; font-size: 22px;">
+                {badge_label}
+            </h2>
+            <div style="font-size: 18px; margin: 6px 0;">
+                <b>Melanoma Risk Probability:</b> <span style="font-size: 22px; font-weight: bold; color: {text_color};">{result['risk_score']*100:.2f}%</span>
+            </div>
+            <div style="font-size: 14px; color: #555; margin-top: 4px;">
+                <b>Operating Point:</b> Threshold = {threshold:.3f} (Calibrated on validation cohort for &ge; 95% target sensitivity)
+            </div>
+            <div style="font-size: 14px; color: #555; margin-top: 2px;">
+                <b>Lesion Footprint:</b> {result['lesion_area_pct']:.2f}% of field of view | <b>Suspicious Foci:</b> {result['detection_count']} box(es) detected
+            </div>
         </div>
-        <div style="font-size: 14px; color: #555; margin-top: 4px;">
-            <b>Operating Point:</b> Threshold = {threshold:.3f} (Calibrated on validation cohort for &ge; 95% target sensitivity)
-        </div>
-        <div style="font-size: 14px; color: #555; margin-top: 2px;">
-            <b>Lesion Footprint:</b> {result['lesion_area_pct']:.2f}% of field of view | <b>Suspicious Foci:</b> {result['detection_count']} box(es) detected
-        </div>
-    </div>
-    """
-    
-    # Latency table
-    lat = result["latency_ms"]
-    latency_str = f"Total: {lat['total']:.1f} ms  |  Preprocess: {lat['preprocess']:.1f} ms  |  Inference: {lat['inference']:.1f} ms  |  Postprocess: {lat['postprocess']:.1f} ms"
-    
-    return overlay_img, badge_html, result["summary"], latency_str
+        """
+        
+        # Latency table
+        lat = result["latency_ms"]
+        latency_str = f"Total: {lat['total']:.1f} ms  |  Preprocess: {lat['preprocess']:.1f} ms  |  Inference: {lat['inference']:.1f} ms  |  Postprocess: {lat['postprocess']:.1f} ms"
+        
+        return overlay_img, badge_html, result["summary"], latency_str
+    except Exception as e:
+        import traceback
+        err_detail = traceback.format_exc()
+        badge_err = f"<div style='background:#fee2e2; border:2px solid #ef4444; border-radius:8px; padding:12px; color:#b91c1c;'><b>Inference Error:</b> {str(e)}</div>"
+        return None, badge_err, f"Error during inference:\n{err_detail}", "Error"
 
 def build_app():
     # Find example images
